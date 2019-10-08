@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Line Chart</title>
+<!--
+Ocean Theme
+http://www.templatemo.com/tm-484-ocean
+-->
+
+    <!-- load stylesheets -->
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400"><!-- Google web font "Open Sans", https://www.google.com/fonts/specimen/Open+Sans -->
+    <link rel="stylesheet" href="font-awesome-4.5.0/css/font-awesome.min.css"> <!-- Font Awesome, https://fortawesome.github.io/Font-Awesome/ -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">                       <!-- Bootstrap style, http://v4-alpha.getbootstrap.com/ -->
+    <link rel="stylesheet" href="css/templatemo-style.css">                    <!-- Templatemo style -->
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+          <![endif]-->
+</head>
+
+    <body>
+
+        <div class="container-fluid">
+           
+
+            <div class="row" id="tm-section-2">
+                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+
+                    <!-- slider -->
+                    <section>
+                        <div id="tmCarousel" class="carousel slide tm-carousel" data-ride="carousel" data-interval="false"> <!-- If you want to make the carousel auto play, remove data-interval="false" -->
+
+
+                            <div class="carousel-inner" role="listbox">
+                            
+                                <div class="carousel-item active">
+                                    <div class="carousel-content">
+                                        <div>
+                                            <h2 class="tm-carousel-item-title"><strong>Line Chart</strong></h2>
+                                            <p class="tm-carousel-item-text">Line chart is used to track changes and used<br />
+											to visualise the value over short and long periods of time. 
+											</p>
+                                        </div>
+                                    </div>                               
+                                </div>
+
+                            </div>
+                            
+                        </div>                    
+                    </section>
+                </div>
+            </div> <!-- row -->
+
+            <div class="row">
+                
+                <section class="tm-2-col-img-text tm-2-col-img-lg-right">
+                    
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-6 col-xl-6 tm-2-col-img">                    
+                        <!-- Import D3 -->
+						<script src="https://d3js.org/d3.v4.js"></script>
+						<!-- Create a div where the graph will take place -->
+						<div id="line"></div>
+						<script>
+						// set the dimensions and lineMargs of the graph
+						var lineMarg = {top: 50, right: 10, bottom: 30, left: 60},
+							lineWidth = 850,
+							lineHeight = 500 - lineMarg.top - lineMarg.bottom;
+
+						// append the svg object to the body of the page
+						var lineSVG = d3.select("#line")
+						  .append("svg")
+							.attr("width", lineWidth + lineMarg.left + lineMarg.right)
+							.attr("height", lineHeight + lineMarg.top + lineMarg.bottom)
+						  .append("g")
+							.attr("transform",
+								  "translate(" + lineMarg.left + "," + lineMarg.top + ")");
+
+						//Read the data
+						d3.csv("excel/line.csv",function(data) {
+
+						  // Add X axis --> it is a date format
+						  var x = d3.scaleLinear()
+							.domain([2014,2018])
+							.range([ 0, lineWidth ]);
+						  lineSVG.append("g")
+							.attr("transform", "translate(0," + lineHeight + ")")
+							.call(d3.axisBottom(x));
+
+						  // Add Y axis
+						  var y = d3.scaleLinear()
+							.domain([48000, 95000])
+							.range([ lineHeight, 0 ]);
+						  lineSVG.append("g")
+							.call(d3.axisLeft(y));
+
+						  // This allows to find the closest X index of the mouse:
+						  var bisect = d3.bisector(function(d) { return d.x; }).left;
+
+						  // Create the circle that travels along the curve of chart
+						  var focus = lineSVG
+							.append('g')
+							.append('circle')
+							  .style("fill", "none")
+							  .attr("stroke", "red")
+							  .attr('r', 8)
+							  .style("opacity", 0)
+
+						  // Create the text that travels along the curve of chart
+						  var focusText = lineSVG
+							.append('g')
+							.append('text')
+							  .style("opacity", 0)
+							  .attr("text-anchor", "right")
+							  .attr("alignment-baseline", "middle")
+
+						  // Create a rect on top of the svg area: this rectangle recovers mouse position
+						  lineSVG
+							.append('rect')
+							.style("fill", "none")
+							.style("pointer-events", "all")
+							.attr('width', lineWidth)
+							.attr('height', lineHeight)
+							.on('mouseover', mouseover)
+							.on('mousemove', mousemove)
+							.on('mouseout', mouseout);
+
+						  // Add the line
+						  lineSVG
+							.append("path")
+							.datum(data)
+							.attr("fill", "none")
+							.attr("stroke", "#7db0ea")
+							.attr("stroke-width", 1.5)
+							.attr("d", d3.line()
+							  .x(function(d) { return x(d.x) })
+							  .y(function(d) { return y(d.y) })
+							  )
+
+
+						  // What happens when the mouse move -> show the annotations at the right positions.
+						  function mouseover() {
+							focus.style("opacity", 1)
+							focusText.style("opacity",1)
+						  }
+
+						  function mousemove() {
+							// recover coordinate we need
+							var x0 = x.invert(d3.mouse(this)[0]);
+							var i = bisect(data, x0, 1);
+							selectedData = data[i]
+							focus
+							  .attr("cx", x(selectedData.x))
+							  .attr("cy", y(selectedData.y))
+							focusText
+							  .html("Year:" + selectedData.x  + " " +" Profit:$" + selectedData.y)
+							  .attr("x", x(selectedData.x)+15)
+							  .attr("y", y(selectedData.y))
+							}
+						  function mouseout() {
+							focus.style("opacity", 0)
+							focusText.style("opacity", 0)
+						  }
+
+						})
+
+						</script>
+                    </div>
+
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-6 col-xl-6 tm-2-col-text">
+                        <h2 class="tm-2-col-text-title"><strong>Example </strong> </h2>
+                        <p class="tm-2-col-text-description">
+                           The line chart shows a shipping company's profit over the span of four years.
+						   As the line chart is increasing, we can tell that this shipping company is doing relatively well
+						   as their profit is rising throughout. 
+						   <i style="color: gray;">(Hover over to view exact value)</i>
+						   <br /> 
+						   If a company's profit line chart shows that it is decreasing over time, it meant that the company is doing badly 
+						   and relevant departments should start to identify the reasons and boost the profits.
+                        </p>                   
+                    </div>
+                    
+                </section>
+
+            </div> <!-- row -->
+            
+        </div> <!-- container-fluid -->   
+
+        <!-- load JS files -->
+        <script src="js/jquery-1.11.3.min.js"></script>             <!-- jQuery, https://jquery.com/download/ -->
+        <script src="https://www.atlasestateagents.co.uk/javascript/tether.min.js"></script> <!-- Tether for Bootstrap, http://stackoverflow.com/questions/34567939/how-to-fix-the-error-error-bootstrap-tooltips-require-tether-http-github-h -->
+        <script src="js/bootstrap.min.js"></script>                 <!-- Bootstrap, http://v4-alpha.getbootstrap.com/ -->
+        <script src="js/jquery.touchSwipe.min.js"></script>         <!-- http://labs.rampinteractive.co.uk/touchSwipe/demos/ -->
+        
+        <script>     
+       
+            $(document).ready(function(){
+
+                /* Smooth Scrolling
+                 * https://css-tricks.com/snippets/jquery/smooth-scrolling/
+                --------------------------------------------------------------*/
+                $('a[href*="#"]:not([href="#"])').click(function() {
+                    if (location.pathname.replace(/^\//,'') == this.pathname.replace(/^\//,'') 
+                        && location.hostname == this.hostname) {
+                        
+                        var target = $(this.hash);
+                        target = target.length ? target : $('[name=' + this.hash.slice(1) +']');
+                        
+                        if (target.length) {
+                            
+                            $('html, body').animate({
+                                scrollTop: target.offset().top
+                            }, 1000);
+                            return false;
+                        }
+                    }
+                }); 
+                
+                /* Enable swiping for tablets and mobile
+                 * http://lazcreative.com/blog/adding-swipe-support-to-bootstrap-carousel-3-0/
+                 ---------------------------------------------------------------------------------*/
+                if($(window).width() <= 991) {
+                    $(".carousel-inner").swipe( {
+                        //Generic swipe handler for all directions
+                        swipeLeft:function(event, direction, distance, duration, fingerCount) {
+                            $(this).parent().carousel('next'); 
+                        },
+                        swipeRight: function() {
+                            $(this).parent().carousel('prev'); 
+                        },
+                        //Default is 75px, set to 0 for demo so any distance triggers swipe
+                        threshold:0
+                    });
+                }  
+
+                /* Handle window resize */
+                $(window).resize(function(){
+                    if($(window).width() <= 991) {
+                        $(".carousel-inner").swipe( {
+                            //Generic swipe handler for all directions
+                            swipeLeft:function(event, direction, distance, duration, fingerCount) {
+                                $(this).parent().carousel('next'); 
+                            },
+                            swipeRight: function() {
+                                $(this).parent().carousel('prev'); 
+                            },
+                            //Default is 75px, set to 0 for demo so any distance triggers swipe
+                            threshold:0
+                        });
+                     }
+                });              
+                           
+            });
+
+        </script>             
+
+</body>
+</html>
